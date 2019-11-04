@@ -100,7 +100,7 @@ export default {
      * @simulated_landing 模拟登陆
      */
     simulated_landing(){
-      let that = this;
+      let that = this; 
       let username = "terminal_01";
       let pwd = "123456";
       let code = "SHJKJD";
