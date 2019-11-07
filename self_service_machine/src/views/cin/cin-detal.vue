@@ -16,7 +16,12 @@
           <ul>
             <li>房间号:
               <div>{{room_no}}</div>
-              <span style="font-size: 16px;color: #777777;margin-left: 10px">(推荐)</span></li>
+              <span style="font-size: 16px;color: #777777;margin-left: 10px">(推荐)</span>
+              <button
+                style="font-size: 14px;color: #FFFFFF;margin-left: 10px;background-color: #007bdb;width: 100px;height: 30px;border-radius: 15px">
+                {{'换一间'}}
+              </button>
+              </li>
             <!--<li>订单号:<div>9527</div></li>-->
             <li>入住人:
               <div>{{checkin_name}}</div>
@@ -26,17 +31,19 @@
             </li>
             <li>入住人数:
               <div style="margin-top: 10px;">
-                <!--                <img src="../../common/imgs/cin/jianhao.png" alt="" style="position: absolute;top: -30px;left: -10px;width: 46px;height: 46px" @click="cut">-->
-                <span style="position: absolute;top: -19px;">{{figure}}</span>
-                <!--                <img src="../../common/imgs/cin/jiahao.png"  alt="" style="position: absolute;top: -30px;left: 118px;width: 46px;height: 46px" @click="">-->
+                <img :src="imageUrl.jianhaoUrl" alt=""
+                    style="position: absolute;top: -30px;left: -10px;width: 46px;height: 46px" @click="cut">
+                <span style="position: absolute;top: -19px;left: 70px">{{figure}}</span>
+                <img :src="imageUrl.jiahaoUrl" alt=""
+                     style="position: absolute;top: -30px;left: 118px;width: 46px;height: 46px" @click="add">
               </div>
             </li>
             <li>入住时间:
               <div>{{begin_date}} ~ {{end_date}}</div>
             </li>
             <li>联系方式:</li>
-            <li><input v-model="phone" maxlength="11" placeholder="如有遗失物品，方便店内人员联系您"
-                       style="width: 430px;height: 44px;line-height: 44px;border: none;border-bottom: 1px solid #777777;font-size: 18px"></input>
+            <li><input @click="handleKey" v-model="phone" maxlength="11" placeholder="如有遗失物品，方便店内人员联系您"
+                       style="width: 430px;height: 44px;line-height: 44px;border: none;border-bottom: 1px solid #777777;font-size: 18px"/>
             </li>
             <li>房价总计:
               <div>￥
@@ -52,6 +59,32 @@
         <li class="right-con"
             :style="{backgroundImage: 'url(' + (coverImgUrl ? coverImgUrl : baseImg) + ')', backgroundSize:'100% 100%'}"></li>
       </ul>
+      <el-drawer
+        class="key-class"
+        :visible.sync="keyVisible"
+        direction="ttb"
+        :wrapperClosable = true
+        :show-close	= false
+        size="41%">
+          <div class="phone">
+            <div class="clavier" style="position: relative">
+              <div v-for="keys in keyList" class="clavier-i">
+                <template v-for="key in keys">
+                  <i v-if="key === 'top'" @click.stop="clickKey"  class="iconfont icon-zhiding tab-top"></i>
+                  <i v-else-if="key === '123'" @click.stop="clickKey"  class="tab-num">123</i>
+                  <i v-else-if="key === 'del'" @click.stop="clickKey"  id="del"  class="iconfont icon-delete key-delete"></i>
+                  <i v-else-if="key === 'blank'" @click.stop="clickKey"  class="iconfont icon-konggejian-jianpanyong tab-blank"></i>
+                  <i v-else-if="key === 'symbol'" @click.stop="clickKey"  class="tab-symbol">符</i>
+                  <i v-else-if="key === 'point'" @click.stop="clickKey"  class="tab-point">88888</i>
+                  <i v-else-if="key === 'enter'" @click.stop="clickKey"  class="iconfont icon-huiche tab-enter"></i>
+                  <i v-else @click.stop="clickKey" >{{key}}</i>
+                </template>
+              </div>
+              <p class="according" @click="keyVisible = false">确定</p>
+              <p class="delete" @click="remove"><img src="../../common/imgs/cin/cin-quxiao.png" alt=""></p>
+            </div>
+        </div>
+      </el-drawer>
       <!--确认入住人信息结束-->
       <!--中间部分结束-->
       <!--引入底部组件底部开始-->
@@ -64,12 +97,30 @@
 <script>
   //const synth = window.speechSynthesis;
   //const msg = new SpeechSynthesisUtterance();
+  import jianhao_no from '../../common/imgs/cin/jianhao_no.png'
+  import jianhao from '../../common/imgs/cin/jianhao.png'
+  import jiahao_no  from  "../../common/imgs/cin/jiahao.png"
+  import jiahao  from  "../../common/imgs/cin/jiahao_active.png"
   import {instance} from '../../common/js/instance'
 
   export default {
     name: "cin-detal",
     data() {
       return {
+        maxLive: 5,//暂时
+        imageUrl: {
+          jianhaoUrl: '',
+          jiahaoUrl: '',
+        },
+        keyList: [],
+        status: 2,//0 小写 1 大写 2 数字 3 符号
+        lowercase: [
+          ['1', '2', '3'],
+          ['4', '5', '6'],
+          ['7', '8', '9'],
+          ['','0','del'],
+        ],
+        keyVisible: false,
         number: true,
         figure: 1,
         hint_submit: {'key': 'submit', 'desc': '提交'},//确认入住
@@ -95,8 +146,27 @@
         orde_list: '',//入住返回订单号
       };
     },
+    mounted: function() {
+      // 编译好的HTML挂载到页面完成后执行的事件钩子
+      // el 被新创建的 vm.$el 替换，并挂载到实例上去之后调用该钩子。
+      // 此钩子函数中一般会做一些ajax请求获取数据进行数据初始化
+      //键盘事件
+      this.keyList = this.lowercase
+    },
+    computed: {
+    },
+    watch: {
+      figure(val) {
+        console.log('val',val)
+        val == 1 ? this.imageUrl.jianhaoUrl = jianhao_no : this.imageUrl.jianhaoUrl = jianhao
+        val >= this.maxLive ? this.imageUrl.jiahaoUrl = jiahao_no : this.imageUrl.jiahaoUrl = jiahao
+      }
+    },
     created() {
       let that = this;
+      this.figure == 1 ? this.imageUrl.jianhaoUrl = jianhao_no : this.imageUrl.jianhaoUrl = jianhao
+      this.figure >= this.maxLive ? this.imageUrl.jiahaoUrl = jiahao_no : this.imageUrl.jiahaoUrl = jiahao
+      console.log('this.imageUrl.jianhaoUrl',this.imageUrl.jianhaoUrl)
       /**
        * 将需要的参数拿到，将需要的信息展示给客户，点击提交以后进行办理入住的业务
        */
@@ -139,6 +209,73 @@
       // that.verify_cin();
     },
     methods: {
+      /**
+       * 弹出键盘处理
+       */
+      handleKey(){
+        this.keyVisible = true
+      },
+      //点击键盘的删除
+      remove(){
+        let str = this.phone;
+        this.phone = str.slice(0,str.length-1);
+      },
+      //键盘事件的开始
+        tabHandle({ value = '' }) {
+          if(value.indexOf('tab-num') > -1){
+            this.status = 2
+            //数字键盘数据
+          }else if(value.indexOf('key-delete') > -1){
+            console.log(value.indexOf('key-delete'),'边缘')
+            this.emitValue('delete')
+          }else if(value.indexOf('tab-blank') > -1){
+            this.emitValue(' ')
+          }else if(value.indexOf('tab-enter') > -1){
+            this.emitValue('\n')
+          }else if(value.indexOf('tab-point') > -1){
+            this.emitValue('.')
+          }else if(value.indexOf('tab-symbol') > -1){
+            this.status = 3
+          }else if(value.indexOf('tab-top') > -1){
+            if(this.status === 0){
+              this.status = 1
+            }else{
+              this.status = 0
+              this.keyList = this.lowercase
+            }
+          }else{
+
+          }
+        },
+        clickKey(event) {
+          // if(event.type === 'click' && this.equip) return
+          let value = event.srcElement.innerText;
+          let id = event.srcElement.id;
+          let target = event.srcElement ? event.srcElement : event.target;
+          if(id !== '' && id === 'del'){//如果点击的是id为del的表示是删除
+            this.emitValue(id);
+          }else if (id !=='' && id==='En'){
+            this.emitValue(id);
+          }
+          this.phone == null ? this.phone = '' : this.phone
+          if(this.phone.length > 10){
+            return
+          }
+          else{//否则
+            value && id !== 'del'? this.emitValue(value) : this.tabHandle(target.classList);
+          }
+        },
+        emitValue(key) {
+          console.log('key',key)
+          if(key == 'del' || key == 'delete'){
+            key = ''
+          }
+          this.$emit('keyVal', key);
+          this.phone+=key;
+        },
+      /**
+       * 断开阻隔
+       */
       check_submit_hitinfo() {
         let that = this;
         /**
@@ -356,8 +493,16 @@
       // 组件的方法
       add() {
         let that = this;
-        that.figure++;
-        that.check_submit_hitinfo();
+        // that.figure++;
+        // that.check_submit_hitinfo();
+        if (that.figure < this.maxLive) {
+          that.figure++;
+          that.check_submit_hitinfo();
+        } else {
+          // that.hintInfo('warning', '宾客不可少于一个');
+          instance('宾客不可超过最大入住人数' + this.maxLive + '个')
+          return;
+        }
       },
       cut() {
         let that = this;
@@ -365,7 +510,8 @@
           that.figure--;
           that.check_submit_hitinfo();
         } else {
-          that.hintInfo('warning', '宾客不可少于一个');
+          // that.hintInfo('warning', '宾客不可少于一个');
+          instance('宾客不可少于一个')
           return;
         }
       },
@@ -426,13 +572,84 @@
   li {
     list-style: none;
   }
+  .key-class
+    .phone{
+        // width:500px;
+        // height:350px;
+        // background:rgba(15,15,15,1);
+        margin:  auto;
+        margin-top: 69px;
+        .clavier{
+          width:398px;
+          height:298px;
+          background:rgba(255,255,255,1);
+          border-radius:10px;
+          margin: auto;
+          border-collapse:collapse;
+          border-radius:10px;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-between;
 
+          .clavier-i{
+            //这里可设置使里面方块高度增加
+            width:398px;
+            display: flex;
+            position: relative;
+            border-bottom: 1px solid rgba(204,204,204,1);
+            border-radius:10px;
+            i{
+              /*border:1px solid rgba(204,204,204,1);*/
+              border-right:1px solid rgba(204,204,204,1);
+              /*border-left: none;*/
+              width: 132px;
+              height: 50px;
+              flex-grow: 1;
+              font-size:40px;
+              font-family:PingFangSC-Regular;
+              font-weight:400;
+              color:rgba(51,51,51,1);
+              text-align: center;
+              line-height: 45px;
+              border-bottom: none;
+            }
+            i:last-child{
+             border-right: none;
+            }
+          }
+          .delete{
+            right: 0;
+            img{
+              width: 56px;
+              height: 36px;
+              margin: auto;
+              margin-top: 64px;
+              position: relative;
+              bottom: 112px;
+              right: 38px;
+            }
+          }
+          .according{
+            position: relative;
+            bottom: 72px;
+            left: 35px;
+            font-size:35px;
+            font-family:PingFangSC-Regular;
+            font-weight:400;
+            color:rgba(51,51,51,1);
+            text-align: center;
+            line-height: 99px;
+            margin: 0;
+          }
+
+        }
+      }
   .cin-phone {
     width: 1080px;
     height: 1920px;
     background: #fff url(../../common/imgs/juxing.png) no-repeat center;
     position: relative;
-
+    
     .masking {
       width: 1080px;
       height: 1920px;
@@ -542,4 +759,18 @@
     }
 
   }
+</style>
+<style  scoped>
+  .key-class>>> .el-drawer{
+    width: 540px;
+    left: 90px;
+    top: 1000px;
+  }
+  .key-class>>> .el-drawer__header{
+    padding: 0px 0px 0;
+    margin-bottom: 0px;
+  }
+  /* .key-class .el-drawer__body{
+    height: 100px;  
+  } */
 </style>

@@ -7,7 +7,7 @@
       <div class="return">
         <home-back></home-back>
         <span>请确认续住信息</span>
-        <back-view></back-view>
+        <!-- <back-view></back-view> -->
       </div>
       <!--中间部分开始-->
       <ul class="message">
@@ -17,10 +17,12 @@
             <li>房间号:<div>{{RoomNo}}</div></li>
             <li>房间类型：<div>{{RoomType}}</div></li>
             <li>入住人数:
-              <div style="margin-top: 10px;">
-                <!--<img src="@/common/imgs/cin/jianhao.png" alt="" style="position: absolute;top: -30px;left: -10px;width: 46px;height: 46px" @click="cut">-->
-                <span style="position: absolute;top: -19px;left: 71px">{{figure}}</span>
-                <!--<img src="@/common/imgs/cin/jiahao.png" alt="" @click="add" style="position: absolute;top: -30px;left: 118px;width: 46px;height: 46px">-->
+                <div style="margin-top: 10px;">
+                  <img :src="imageUrl.jianhaoUrl" alt=""
+                      style="position: absolute;top: -30px;left: -10px;width: 46px;height: 46px" @click="cut">
+                  <span style="position: absolute;top: -19px;left: 70px">{{figure}}</span>
+                  <img :src="imageUrl.jiahaoUrl" alt=""
+                      style="position: absolute;top: -30px;left: 118px;width: 46px;height: 46px" @click="add">
               </div>
             </li>
             <li>入住时间:<div style="color:rgba(0,123,219,1);">{{BeginTime}}/{{EndTime}}</div></li>
@@ -37,25 +39,65 @@
           </ul>
         </li>
         <li class="calendar">
-          <el-date-picker
+          <div class="rightClass">
+            <ul>
+              <li>
+                <span class="span_1">续住天数</span>
+              </li>
+              <li>
+                <el-input-number v-model="num" :min="1" label="描述文字"></el-input-number>
+              </li>
+              <li>
+                <ul class="title">
+                  <li>
+                    <ul>
+                      <li>离店日期</li>
+                      <li>续住日期</li>
+                    </ul>
+                    <ul>
+                      <li>2018/11/08</li>
+                      <li>2018/11/09</li>
+                    </ul>
+                    <ul>
+                      <li>{{myDate}}</li>
+                      <li>星期六</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+              <li style="height: 2px; text-align: center; width: 360px;display: inline-block; background: #007BDBFF;margin-top: 50px;">
+              </li>
+              <li style="margin-top: 14px;">
+                <span class="span_1" style="font-size: 16px">实时房价牌</span>
+                <span class="span_1" style="font-size: 12px;color: #DB0039FF;display:block;margin-top:2px;">续住期间如需换房或原房间不可住，请到前台办理续住</span>
+              </li>
+              <li>
+                 <ul class="title_end">
+                  <li>
+                    <ul v-for="(item,index) of onTime_price" :key="index">
+                      <li>
+                        <span v-bind:style="{ color: item.status == 1 ? activeColor : blackColor }">{{item.date}}</span>
+                        <span v-if="item.status == 1" style="color: #777777FF">已预订</span>
+                        <span v-else style="display: inline-block;margin-left: 55px"></span>
+                      </li>
+                      <li v-bind:style="{ color: item.status == 1 ? activeColor : blackColor }">¥{{item.price}}</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <div></div>
+          </div>
+          <!-- <el-date-picker
             v-model="leave_time_xz"
             value-format="yyyy-MM-dd"
             @change="clickDay"
             type="date"
             placeholder="选择日期">
-          </el-date-picker>
+          </el-date-picker> -->
           <!--<Calendar v-on:choseDay="clickDay" v-on:changeMonth="changeDate"  >
 
           </Calendar>-->
-          <!--<ul class="title">
-            <li>
-              <ul>
-                <li>日期</li>
-                <li>当日价格</li>
-                <li>点选</li>
-              </ul>
-            </li>
-          </ul>-->
           <!--<ul class="Daymany">
             <li>
               <span style="color: rgba(119,119,119,1);margin-left: 10px">2018-10-01</span>
@@ -80,13 +122,38 @@
 </template>
 
 <script>
+  import jianhao_no from '../../common/imgs/cin/jianhao_no.png'
+  import jianhao from '../../common/imgs/cin/jianhao.png'
+  import jiahao_no  from  "../../common/imgs/cin/jiahao.png"
+  import jiahao  from  "../../common/imgs/cin/jiahao_active.png"
   import Calendar from 'vue-calendar-component';
   export default {
     name: "success",
     data(){
       return {
+        myDate: '',
+        imageUrl: {
+          jianhaoUrl: '',
+          jiahaoUrl: '',
+        },
+        activeColor: '#777777FF',
+        blackColor: '#222222FF',
+        onTime_price:[{
+          date: '11/05',
+          status: 1,
+          price: '360.00'
+        },{
+          date: '11/06',
+          status: 0,
+          price: '320.00'
+        },{
+          date: '11/06',
+          status: 1,
+          price: '320.00'
+        }],
+        num: 1,
         rate_code : '',//房价码
-        figure:"",
+        figure: 1,
         //续住的房号
         RoomNo : '',
         //续住的房间类型
@@ -116,7 +183,15 @@
         url : this.api.api_price + '/v1/room/machine/get_room_type_price/',//获取酒店的房型信息
       }
     },
+    watch: {
+      figure(val) {
+        console.log('val',val)
+        val == 1 ? this.imageUrl.jianhaoUrl = jianhao_no : this.imageUrl.jianhaoUrl = jianhao
+        val >= this.maxLive ? this.imageUrl.jiahaoUrl = jiahao_no : this.imageUrl.jiahaoUrl = jiahao
+      }
+    },
     created: function() {
+      this.getWeekDay()
       /**
        * 将首页缓存中的数据拿到
        * @type {any}
@@ -142,9 +217,21 @@
       this.EndTime = sessionStorage.getItem('leave_time');
       this.phone = sessionStorage.getItem('clavier');
       this.PayMoney = sessionStorage.getItem('fix_rate');
+      this.figure == 1 ? this.imageUrl.jianhaoUrl = jianhao_no : this.imageUrl.jianhaoUrl = jianhao;
+      this.figure >= this.maxLive ? this.imageUrl.jiahaoUrl = jiahao_no : this.imageUrl.jiahaoUrl = jiahao;
     },
       // 组件的方法
       methods: {
+        /**
+         * 获取对应日期的星期
+         */
+        getWeekDay(){
+          var weekDay = ["星期天", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];  
+          let myDate = new Date(Date.parse("2018/5/20"));
+          this.myDate = weekDay[myDate.getDay()]
+          console.log('this.myDate',this.myDate)
+          console.log(weekDay[this.myDate.getDay()]);    // 星期六
+        },
         /**
          * @present 提交续住信息
          * @param RoomNo 房间号 DayNum 续住天数
@@ -435,20 +522,50 @@
           height: 600px;
           position: relative;
           background-color:  rgba(252,252,252,1);
+          .rightClass{
+            margin-top: 30px;
+            font-size: 0px; //清除莫名样式影响
+            .span_1{
+              font-size: 20px;
+            }
+            ul li{
+              height: 50px;
+            }
+          }
+          .title_end{
+            height: 200px;
+            overflow: hidden;
+            margin-top: 15px;
+            ul{
+                margin-top: 8px;
+                display: flex;
+                justify-content:  space-between;
+                li{
+                  height: 29px;
+                  line-height: 29px;
+                  font-size:22px;
+                  font-family:PingFangSC-Regular;
+                  font-weight:Regular;
+                  font-size: 20px;
+                  color:#222222FF;
+                }
+              }
+          }
           .title{
-            width: 450px;
-
+            width: 280px;
+            margin-left: 80px;
             li{
               ul{
                 display: flex;
-                justify-content:  space-between ;
+                justify-content:  space-between;
                 li{
-                  height: 59px;
-                  line-height: 59px;
+                  height: 29px;
+                  line-height: 29px;
                   font-size:22px;
                   font-family:PingFangSC-Regular;
-                  font-weight:400;
-                  color:rgba(51,51,51,1);
+                  font-weight:Regular;
+                  font-size: 12px;
+                  color:#777777FF;
                 }
               }
             }
@@ -494,5 +611,24 @@
       }
     }
 
+  }
+</style>
+<style  scoped>
+  .rightClass>>>.el-input-number{
+    width: 200px;
+    line-height: 50px;
+  }
+  .rightClass>>>.el-input-number__decrease{
+    background: #0A0E37FF;
+    color: #FFFFFFFF;
+  }
+  .rightClass>>>.el-input-number__increase{
+    background: #007BDBFF;
+    color: #FFFFFFFF;
+  }
+  .rightClass>>>.el-input__inner {
+    line-height: 50px;
+    height: 50px;
+    margin-top: 1px;
   }
 </style>
