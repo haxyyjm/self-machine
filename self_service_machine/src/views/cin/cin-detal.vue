@@ -8,7 +8,7 @@
       <div class="return">
         <home-back></home-back>
         <span>请确认入住人信息</span>
-        <back-view></back-view>
+        <!-- <back-view></back-view> -->
       </div>
       <!--确认入住人信息开始-->
       <ul class="message">
